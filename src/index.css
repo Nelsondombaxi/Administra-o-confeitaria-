@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@theme {
+  --color-confeitaria-900: #2b1810;
+  --color-confeitaria-800: #3d2318;
+  --color-confeitaria-700: #5c3524;
+  --color-confeitaria-600: #8c5338;
+  --color-confeitaria-500: #b87351;
+  --color-confeitaria-sand: #fdfbf7;
+  --color-confeitaria-cream: #f4efe6;
+  --color-confeitaria-border: #e6dec5;
+  --color-confeitaria-gold: #c5a059;
+}

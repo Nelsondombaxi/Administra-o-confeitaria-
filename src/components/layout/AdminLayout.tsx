@@ -13,7 +13,7 @@ export default function AdminLayout({ children, activeTab, setActiveTab, onLogou
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-stone-100 flex font-sans text-stone-900">
+    <div className="min-h-screen bg-[#fdfbf7] flex font-sans text-[#2b1810]">
       <Sidebar 
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
