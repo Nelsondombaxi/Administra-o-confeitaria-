@@ -1,24 +1,60 @@
 import { useState } from 'react';
 import { mockCategories } from '../../data/mocks/categories.mock';
 import { CategoryTable } from '../../components/categories/CategoryTable';
+import { CategoryModal } from '../../components/categories/CategoryModal';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import type { Category } from '../../types';
 import { Plus, Search } from 'lucide-react';
 
 export function CategoriesPage() {
-  const [categories] = useState<Category[]>(mockCategories);
+  const [categories, setCategories] = useState<Category[]>(mockCategories);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 
   const filteredCategories = categories.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleEdit = (category: Category) => {
-    alert(`Editar categoria: ${category.name}`);
+  const handleOpenAdd = () => {
+    setSelectedCategory(null);
+    setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    alert(`Apagar categoria ID: ${id}`);
+  const handleEdit = (category: Category) => {
+    setSelectedCategory(category);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (category: Category) => {
+    setCategoryToDelete(category);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveCategory = (data: any) => {
+    if (selectedCategory) {
+      setCategories(categories.map(c => c.id === selectedCategory.id ? { ...c, ...data } : c));
+    } else {
+      const newCategory: Category = {
+        id: String(Date.now()),
+        name: data.name,
+        description: data.description,
+        productCount: 0
+      };
+      setCategories([newCategory, ...categories]);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (categoryToDelete) {
+      setCategories(categories.filter(c => c.id !== categoryToDelete.id));
+      setCategoryToDelete(null);
+    }
   };
 
   return (
@@ -29,7 +65,7 @@ export function CategoriesPage() {
           <p className="text-sm text-[#5c3524] mt-1">Organize os seus produtos para facilitar a navegação.</p>
         </div>
         <button 
-          onClick={() => alert('Abrir modal de Adicionar Categoria')}
+          onClick={handleOpenAdd}
           className="px-4 py-2.5 rounded-xl bg-[#5c3524] hover:bg-[#3d2318] text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-sm border border-[#c5a059]/40 self-start md:self-auto"
         >
           <Plus className="w-4 h-4 text-[#c5a059]" />
@@ -53,7 +89,25 @@ export function CategoriesPage() {
       <CategoryTable 
         categories={filteredCategories} 
         onEdit={handleEdit} 
-        onDelete={handleDelete} 
+        onDelete={(id) => {
+          const cat = categories.find(c => c.id === id);
+          if (cat) handleDeleteClick(cat);
+        }} 
+      />
+
+      <CategoryModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        category={selectedCategory}
+        onSave={handleSaveCategory}
+      />
+
+      <ConfirmDialog 
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar categoria?"
+        message={`Tens a certeza que queres eliminar "${categoryToDelete?.name}"?`}
       />
     </div>
   );

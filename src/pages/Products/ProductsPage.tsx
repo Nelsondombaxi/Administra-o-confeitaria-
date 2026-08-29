@@ -1,24 +1,64 @@
 import { useState } from 'react';
 import { mockProducts } from '../../data/mocks/products.mock';
 import { ProductTable } from '../../components/products/ProductTable';
+import { ProductModal } from '../../components/products/ProductModal';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import type { Product } from '../../types/product';
 import { Plus, Search } from 'lucide-react';
 
 export function ProductsPage() {
-  const [products] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>(mockProducts);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleEdit = (product: Product) => {
-    alert(`Editar produto (Modal visual no M1): ${product.name}`);
+  const handleOpenAdd = () => {
+    setSelectedProduct(null);
+    setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    alert(`Apagar produto ID: ${id}`);
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSaveProduct = (data: any) => {
+    if (selectedProduct) {
+      setProducts(products.map(p => p.id === selectedProduct.id ? { ...p, ...data } : p));
+    } else {
+      const newProduct: Product = {
+        id: String(Date.now()),
+        name: data.name,
+        categoryId: '1',
+        categoryName: data.category,
+        description: data.description,
+        price: data.price,
+        imageUrl: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&auto=format&fit=crop&q=60',
+        available: data.available
+      };
+      setProducts([newProduct, ...products]);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (productToDelete) {
+      setProducts(products.filter(p => p.id !== productToDelete.id));
+      setProductToDelete(null);
+    }
   };
 
   return (
@@ -29,7 +69,7 @@ export function ProductsPage() {
           <p className="text-sm text-[#5c3524] mt-1">{products.length} produtos registados na vitrine.</p>
         </div>
         <button 
-          onClick={() => alert('Abrir modal de Adicionar Produto')}
+          onClick={handleOpenAdd}
           className="px-4 py-2.5 rounded-xl bg-[#5c3524] hover:bg-[#3d2318] text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-sm border border-[#c5a059]/40 self-start md:self-auto"
         >
           <Plus className="w-4 h-4 text-[#c5a059]" />
@@ -53,7 +93,25 @@ export function ProductsPage() {
       <ProductTable 
         products={filteredProducts} 
         onEdit={handleEdit} 
-        onDelete={handleDelete} 
+        onDelete={(id) => {
+          const prod = products.find(p => p.id === id);
+          if (prod) handleDeleteClick(prod);
+        }} 
+      />
+
+      <ProductModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        product={selectedProduct}
+        onSave={handleSaveProduct}
+      />
+
+      <ConfirmDialog 
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar produto?"
+        message={`Tens a certeza que queres eliminar "${productToDelete?.name}"?`}
       />
     </div>
   );
