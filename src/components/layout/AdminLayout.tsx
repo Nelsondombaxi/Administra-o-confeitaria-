@@ -23,10 +23,7 @@ export default function AdminLayout({ children, activeTab, setActiveTab, onLogou
       />
 
       <div className="flex-1 flex flex-col md:pl-64">
-        <Topbar 
-          activeTab={activeTab}
-          onOpenSidebar={() => setSidebarOpen(true)}
-        />
+        <Topbar />
 
         <main className="flex-1 p-6 md:p-8">
           {children}

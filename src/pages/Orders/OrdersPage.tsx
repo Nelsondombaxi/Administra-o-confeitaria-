@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { mockOrders } from '../../data/mocks/orders.mock';
 import { OrderTable } from '../../components/orders/OrderTable';
-import type{ Order } from '../../types';
+import { OrderDetailsModal } from '../../components/orders/OrderDetailsModal';
+import type { Order } from '../../types';
 import { Search, Filter } from 'lucide-react';
 
 export function OrdersPage() {
-  const [orders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const filteredOrders = orders.filter(o => {
     const matchesSearch = o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -18,7 +22,14 @@ export function OrdersPage() {
   });
 
   const handleViewDetails = (order: Order) => {
-    alert(`Abrir detalhes e comprovativo do pedido: ${order.id} - ${order.customerName}`);
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveOrderStatus = (newStatus: string) => {
+    if (selectedOrder) {
+      setOrders(orders.map(o => o.id === selectedOrder.id ? { ...o, status: newStatus as any } : o));
+    }
   };
 
   return (
@@ -61,6 +72,13 @@ export function OrdersPage() {
       <OrderTable 
         orders={filteredOrders} 
         onViewDetails={handleViewDetails} 
+      />
+
+      <OrderDetailsModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        order={selectedOrder}
+        onSave={handleSaveOrderStatus}
       />
     </div>
   );

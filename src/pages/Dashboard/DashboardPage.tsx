@@ -1,4 +1,4 @@
-export function DashboardPage() {
+export function DashboardPage({ onNavigate }: { onNavigate: (tab: string) => void }) {
   return (
     <div className="space-y-6">
       <div className="bg-[#f4efe6] p-6 rounded-2xl border border-[#e6dec5] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -34,7 +34,12 @@ export function DashboardPage() {
       <div className="bg-white rounded-2xl border border-[#e6dec5] p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#f4efe6]">
           <h3 className="text-base font-bold text-[#2b1810] font-serif">Pedidos recentes</h3>
-          <span className="text-xs text-[#8c5338] font-medium hover:underline cursor-pointer">Ver todos</span>
+          <button 
+            onClick={() => onNavigate('orders')}
+            className="text-xs text-[#8c5338] font-bold hover:underline cursor-pointer bg-transparent border-none p-0"
+          >
+            Ver todos
+          </button>
         </div>
         
         <div className="space-y-3">

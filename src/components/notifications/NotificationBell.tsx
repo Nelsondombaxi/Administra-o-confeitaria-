@@ -32,14 +32,13 @@ export function NotificationBell() {
         )}
       </button>
 
-      {isOpen && (
-        <NotificationPanel 
-          notifications={notifications}
-          onClose={() => setIsOpen(false)}
-          onMarkAsRead={handleMarkAsRead}
-          onMarkAllAsRead={handleMarkAllAsRead}
-        />
-      )}
+      <NotificationPanel 
+        isOpen={isOpen}
+        notifications={notifications}
+        onClose={() => setIsOpen(false)}
+        onMarkAsRead={handleMarkAsRead}
+        onMarkAllAsRead={handleMarkAllAsRead}
+      />
     </div>
   );
 }
