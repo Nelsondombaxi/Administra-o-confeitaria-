@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AdminLayout from './components/layout/AdminLayout';
 import { DashboardPage } from './pages/Dashboard/DashboardPage';
+import { ProductsPage } from './pages/Products/ProductsPage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -16,7 +17,7 @@ export default function App() {
       case 'pedidos':
         return <div className="p-6"><h1 className="text-2xl font-bold">Página de Pedidos (Em construção)</h1></div>;
       case 'produtos':
-        return <div className="p-6"><h1 className="text-2xl font-bold">Página de Produtos (Em construção)</h1></div>;
+        return <ProductsPage />;
       case 'categorias':
         return <div className="p-6"><h1 className="text-2xl font-bold">Página de Categorias (Em construção)</h1></div>;
       case 'configuracoes':
