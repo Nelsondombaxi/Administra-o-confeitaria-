@@ -3,26 +3,34 @@ import AdminLayout from './components/layout/AdminLayout';
 import { DashboardPage } from './pages/Dashboard/DashboardPage';
 import { ProductsPage } from './pages/Products/ProductsPage';
 import { CategoriesPage } from './pages/Categories/CategoriesPage';
+import { OrdersPage } from './pages/Orders/OrdersPage';
+import { SettingsPage } from './pages/Settings/SettingsPage';
+import { LoginPage } from './pages/Login/LoginPage';
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const handleLogout = () => {
-    alert('Simulação de Logout efetuada com sucesso!');
+    setIsAuthenticated(false);
   };
+
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardPage />;
       case 'pedidos':
-        return <div className="p-6"><h1 className="text-2xl font-bold">Página de Pedidos (Em construção)</h1></div>;
+        return <OrdersPage />;
       case 'produtos':
         return <ProductsPage />;
       case 'categorias':
         return <CategoriesPage />;
       case 'configuracoes':
-        return <div className="p-6"><h1 className="text-2xl font-bold">Página de Configurações (Em construção)</h1></div>;
+        return <SettingsPage />;
       default:
         return <DashboardPage />;
     }
