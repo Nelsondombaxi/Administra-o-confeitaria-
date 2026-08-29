@@ -22,7 +22,7 @@ export function NotificationBell() {
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-10 h-10 rounded-xl bg-white border border-[#e6dec5] hover:border-[#c5a059] text-[#5c3524] flex items-center justify-center transition-all cursor-pointer relative shadow-sm"
+        className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-[#f4efe6] hover:bg-[#e6dec5] flex items-center justify-center text-[#5c3524] transition-all cursor-pointer relative border border-[#e6dec5]"
       >
         <Bell className="w-4 h-4 text-[#2b1810]" />
         {unreadCount > 0 && (
