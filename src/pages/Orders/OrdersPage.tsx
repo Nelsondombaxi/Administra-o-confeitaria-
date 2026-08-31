@@ -22,13 +22,18 @@ export function OrdersPage() {
         const formattedOrders: Order[] = data.map((item: any) => ({
           id: item.id,
           customerName: item.customer_name || 'Cliente',
-          productName: item.product_name || 'Produto',
+          customerPhone: item.customer_phone || '',
+          customerAddress: item.customer_address || '',
+          productName: item.products?.name || item.product_name || 'Produto',
+          quantity: item.quantity || 1,
           status: item.status,
           total: item.total_amount || item.total || 0,
           totalValue: item.total_amount || item.total || 0,
           createdAt: item.created_at,
           paymentStatus: item.payment_status,
-          paymentProofUrl: item.payment_proof_url
+          paymentMethod: item.payment_method,
+          paymentProofUrl: item.payment_proof_url,
+          notes: item.notes || ''
         } as unknown as Order));
         setOrders(formattedOrders);
       }

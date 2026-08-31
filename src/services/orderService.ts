@@ -1,11 +1,11 @@
 import { supabase } from '../lib/supabase';
 
 export const orderService = {
-  // Obter todas as encomendas (Admin)
+  // Obter todas as encomendas com os dados do produto (Admin)
   async getAllOrders() {
     const { data, error } = await supabase
       .from('orders')
-      .select('*')
+      .select('*, products(name)')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
