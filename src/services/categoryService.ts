@@ -11,10 +11,32 @@ export const categoryService = {
     return data;
   },
 
-  async createCategory(categoryData: { name: string; slug: string; description?: string }) {
+  async createCategory(categoryData: { name: string; slug: string; description?: string; image_url?: string }) {
+    const payload = {
+      ...categoryData,
+      image_url: categoryData.image_url || null,
+    };
+
     const { data, error } = await supabase
       .from('categories')
-      .insert([categoryData])
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateCategory(id: string, categoryData: { name?: string; slug?: string; description?: string; image_url?: string }) {
+    const payload = {
+      ...categoryData,
+      image_url: categoryData.image_url || null,
+    };
+
+    const { data, error } = await supabase
+      .from('categories')
+      .update(payload)
+      .eq('id', id)
       .select()
       .single();
 

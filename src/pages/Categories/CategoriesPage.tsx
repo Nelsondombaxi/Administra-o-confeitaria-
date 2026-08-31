@@ -62,11 +62,18 @@ export function CategoriesPage() {
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-');
 
-      await categoryService.createCategory({ 
+      const payload = { 
         name: data.name, 
         slug, 
-        description: data.description 
-      });
+        description: data.description,
+        image_url: data.image_url 
+      };
+
+      if (selectedCategory) {
+        await categoryService.updateCategory(selectedCategory.id, payload);
+      } else {
+        await categoryService.createCategory(payload);
+      }
 
       setIsModalOpen(false);
       fetchCategories();
