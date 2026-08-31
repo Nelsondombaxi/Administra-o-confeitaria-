@@ -1,4 +1,53 @@
+import { useState, useEffect } from 'react';
+import { orderService } from '../../services/orderService';
+import { supabase } from '../../lib/supabase';
+import { Loader2 } from 'lucide-react';
+
 export function DashboardPage({ onNavigate }: { onNavigate: (tab: string) => void }) {
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [activeProductsCount, setActiveProductsCount] = useState(0);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        setLoading(true);
+
+        const ordersData = await orderService.getAllOrders();
+        if (ordersData) {
+          setTotalOrders(ordersData.length);
+          const pending = ordersData.filter((item: any) => !item.status || item.status === 'pending');
+          setPendingCount(pending.length);
+          setRecentOrders(ordersData.slice(0, 3));
+        }
+
+        const { count, error } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true });
+
+        if (!error && count !== null) {
+          setActiveProductsCount(count);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-24">
+        <Loader2 className="w-8 h-8 text-[#c5a059] animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="bg-[#f4efe6] p-6 rounded-2xl border border-[#e6dec5] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -12,21 +61,21 @@ export function DashboardPage({ onNavigate }: { onNavigate: (tab: string) => voi
         <div className="bg-white p-6 rounded-2xl border border-[#e6dec5] shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#f4efe6] rounded-bl-full -z-0 opacity-50" />
           <p className="text-xs font-bold text-[#8c5338] uppercase tracking-wider relative z-10">Total Pedidos</p>
-          <p className="text-3xl font-black text-[#2b1810] mt-2 relative z-10 font-serif">24</p>
-          <span className="text-[10px] text-[#5c3524] mt-1 block relative z-10">+12% em relação à semana passada</span>
+          <p className="text-3xl font-black text-[#2b1810] mt-2 relative z-10 font-serif">{totalOrders}</p>
+          <span className="text-[10px] text-[#5c3524] mt-1 block relative z-10">Atualizado da base de dados</span>
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-[#e6dec5] shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -z-0 opacity-50" />
           <p className="text-xs font-bold text-amber-800 uppercase tracking-wider relative z-10">Pendentes</p>
-          <p className="text-3xl font-black text-[#2b1810] mt-2 relative z-10 font-serif">5</p>
+          <p className="text-3xl font-black text-[#2b1810] mt-2 relative z-10 font-serif">{pendingCount}</p>
           <span className="text-[10px] text-amber-800/80 mt-1 block relative z-10">A aguardar confirmação de pagamento</span>
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-[#e6dec5] shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#f4efe6] rounded-bl-full -z-0 opacity-50" />
           <p className="text-xs font-bold text-[#8c5338] uppercase tracking-wider relative z-10">Produtos Ativos</p>
-          <p className="text-3xl font-black text-[#2b1810] mt-2 relative z-10 font-serif">18</p>
+          <p className="text-3xl font-black text-[#2b1810] mt-2 relative z-10 font-serif">{activeProductsCount}</p>
           <span className="text-[10px] text-[#5c3524] mt-1 block relative z-10">Disponíveis na vitrine</span>
         </div>
       </div>
@@ -43,33 +92,43 @@ export function DashboardPage({ onNavigate }: { onNavigate: (tab: string) => voi
         </div>
         
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3.5 bg-[#fdfbf7] rounded-xl border border-[#e6dec5]/60 hover:bg-[#f4efe6]/50 transition-colors">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold bg-[#2b1810] text-[#c5a059] px-2.5 py-1 rounded-lg">#1024</span>
-              <div>
-                <p className="text-sm font-bold text-[#2b1810]">João Silva</p>
-                <p className="text-xs text-[#5c3524]">Bolo de Chocolate Supremo</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-sm font-bold text-[#2b1810] block">12.500 Kz</span>
-              <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full inline-block mt-0.5">Pendente</span>
-            </div>
-          </div>
+          {recentOrders.length === 0 ? (
+            <p className="text-xs text-[#5c3524] text-center py-4">Nenhum pedido recente encontrado.</p>
+          ) : (
+            recentOrders.map((order: any) => {
+              const rawTotal = order.total_amount || order.total || 0;
+              const formattedPrice = new Intl.NumberFormat('pt-AO', {
+                style: 'currency',
+                currency: 'AOA',
+              }).format(rawTotal).replace('AOA', 'Kz');
 
-          <div className="flex items-center justify-between p-3.5 bg-[#fdfbf7] rounded-xl border border-[#e6dec5]/60 hover:bg-[#f4efe6]/50 transition-colors">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold bg-[#2b1810] text-[#c5a059] px-2.5 py-1 rounded-lg">#1023</span>
-              <div>
-                <p className="text-sm font-bold text-[#2b1810]">Ana Maria</p>
-                <p className="text-xs text-[#5c3524]">Red Velvet Clássico</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-sm font-bold text-[#2b1810] block">20.000 Kz</span>
-              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full inline-block mt-0.5">Confirmado</span>
-            </div>
-          </div>
+              const isPending = !order.status || order.status === 'pending';
+              const customerName = order.customer_name || 'Cliente';
+              const productName = order.product_name || 'Produto';
+
+              return (
+                <div key={order.id} className="flex items-center justify-between p-3.5 bg-[#fdfbf7] rounded-xl border border-[#e6dec5]/60 hover:bg-[#f4efe6]/50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold bg-[#2b1810] text-[#c5a059] px-2.5 py-1 rounded-lg font-mono">
+                      #{order.id.slice(0, 4)}
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-[#2b1810]">{customerName}</p>
+                      <p className="text-xs text-[#5c3524]">{productName}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-[#2b1810] block">{formattedPrice}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mt-0.5 ${
+                      isPending ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {isPending ? 'Pendente' : 'Confirmado'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

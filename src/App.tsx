@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import AdminLayout from './components/layout/AdminLayout';
 
@@ -10,10 +10,17 @@ import { SettingsPage } from './pages/Settings/SettingsPage';
 import { LoginPage } from './pages/Login/LoginPage';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('veyra_auth') === 'true';
+  });
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  useEffect(() => {
+    localStorage.setItem('veyra_auth', isAuthenticated ? 'true' : 'false');
+  }, [isAuthenticated]);
+
   const handleLogout = () => {
+    localStorage.removeItem('veyra_auth');
     setIsAuthenticated(false);
   };
 
@@ -28,7 +35,7 @@ export default function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardPage />;
+        return <DashboardPage onNavigate={setActiveTab} />;
 
       case 'orders':
         return <OrdersPage />;
@@ -43,7 +50,7 @@ export default function App() {
         return <SettingsPage />;
 
       default:
-        return <DashboardPage />;
+        return <DashboardPage onNavigate={setActiveTab} />;
     }
   };
 

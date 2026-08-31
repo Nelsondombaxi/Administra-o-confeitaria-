@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -9,6 +10,7 @@ import {
   X
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
+import { orderService } from '../../services/orderService';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -19,9 +21,31 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose, activeTab, setActiveTab, onLogout }: SidebarProps) {
+  const [pendingCount, setPendingCount] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    async function fetchPendingOrdersCount() {
+      try {
+        const data = await orderService.getAllOrders();
+        if (data) {
+          const pending = data.filter((item: any) => !item.status || item.status === 'pending');
+          if (pending.length > 0) {
+            setPendingCount(String(pending.length));
+          } else {
+            setPendingCount(undefined);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar contagem de pedidos:', error);
+      }
+    }
+
+    fetchPendingOrdersCount();
+  }, []);
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'orders', label: 'Pedidos', icon: ShoppingBag, badge: '5' },
+    { id: 'orders', label: 'Pedidos', icon: ShoppingBag, badge: pendingCount },
     { id: 'produtos', label: 'Produtos', icon: Package },
     { id: 'categorias', label: 'Categorias', icon: FolderTree },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
@@ -76,8 +100,8 @@ export function Sidebar({ isOpen, onClose, activeTab, setActiveTab, onLogout }: 
               <User className="w-5 h-5" />
             </div>
             <div className="overflow-hidden">
-              <p className="text-xs font-bold text-[#f4efe6] truncate">Administrador</p>
-              <p className="text-[10px] text-[#b87351] truncate">admin@veyra.com</p>
+              <p className="text-xs font-bold text-[#f4efe6] truncate">Raquel Dombaxi</p>
+              <p className="text-[10px] text-[#b87351] truncate">raquel@veyra.com</p>
             </div>
           </div>
 

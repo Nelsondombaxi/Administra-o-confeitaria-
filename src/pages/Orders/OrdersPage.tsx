@@ -1,22 +1,52 @@
-import { useState } from 'react';
-import { mockOrders } from '../../data/mocks/orders.mock';
+import { useState, useEffect } from 'react';
+import { orderService } from '../../services/orderService';
 import { OrderTable } from '../../components/orders/OrderTable';
 import { OrderDetailsModal } from '../../components/orders/OrderDetailsModal';
 import type { Order } from '../../types';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Loader2 } from 'lucide-react';
 
 export function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await orderService.getAllOrders();
+      if (data) {
+        const formattedOrders: Order[] = data.map((item: any) => ({
+          id: item.id,
+          customerName: item.customer_name || 'Cliente',
+          productName: item.product_name || 'Produto',
+          status: item.status,
+          total: item.total_amount || item.total || 0,
+          totalValue: item.total_amount || item.total || 0,
+          createdAt: item.created_at,
+          paymentStatus: item.payment_status,
+          paymentProofUrl: item.payment_proof_url
+        } as unknown as Order));
+        setOrders(formattedOrders);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar pedidos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
   const filteredOrders = orders.filter(o => {
-    const matchesSearch = o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          o.productName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = o.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          o.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          o.productName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -26,9 +56,14 @@ export function OrdersPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveOrderStatus = (newStatus: string) => {
-    if (selectedOrder) {
-      setOrders(orders.map(o => o.id === selectedOrder.id ? { ...o, status: newStatus as any } : o));
+  const handleSaveOrderStatus = async (newStatus: string) => {
+    if (!selectedOrder) return;
+    try {
+      await orderService.updateOrderStatus(selectedOrder.id, { status: newStatus });
+      await fetchOrders();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao atualizar estado do pedido:', error);
     }
   };
 
@@ -69,10 +104,16 @@ export function OrdersPage() {
         </div>
       </div>
 
-      <OrderTable 
-        orders={filteredOrders} 
-        onViewDetails={handleViewDetails} 
-      />
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 text-[#c5a059] animate-spin" />
+        </div>
+      ) : (
+        <OrderTable 
+          orders={filteredOrders} 
+          onViewDetails={handleViewDetails} 
+        />
+      )}
 
       <OrderDetailsModal 
         isOpen={isModalOpen}
