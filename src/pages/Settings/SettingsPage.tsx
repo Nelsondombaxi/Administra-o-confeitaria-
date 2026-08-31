@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Store, Bell, Shield, Save } from 'lucide-react';
+import { Store, Bell, Save } from 'lucide-react';
 
 export function SettingsPage() {
   const [storeName, setStoreName] = useState('Veyra Confeitaria');

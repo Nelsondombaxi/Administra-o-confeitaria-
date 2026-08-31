@@ -1,5 +1,5 @@
 import type { Product } from '../../types/product';
-import { Edit, MoreVertical, Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface ProductRowProps {
   product: Product;

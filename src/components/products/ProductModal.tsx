@@ -5,10 +5,11 @@ interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   product?: any;
+  categories: any[];
   onSave: (data: any) => void;
 }
 
-export function ProductModal({ isOpen, onClose, product, onSave }: ProductModalProps) {
+export function ProductModal({ isOpen, onClose, product, categories, onSave }: ProductModalProps) {
   const isEditing = !!product;
 
   return (
@@ -19,6 +20,7 @@ export function ProductModal({ isOpen, onClose, product, onSave }: ProductModalP
     >
       <ProductForm 
         initialData={product} 
+        categories={categories}
         onSave={(data) => {
           onSave(data);
           onClose();

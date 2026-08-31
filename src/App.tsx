@@ -1,5 +1,7 @@
 import { useState } from 'react';
+
 import AdminLayout from './components/layout/AdminLayout';
+
 import { DashboardPage } from './pages/Dashboard/DashboardPage';
 import { ProductsPage } from './pages/Products/ProductsPage';
 import { CategoriesPage } from './pages/Categories/CategoriesPage';
@@ -16,30 +18,39 @@ export default function App() {
   };
 
   if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />;
+    return (
+      <LoginPage
+        onLoginSuccess={() => setIsAuthenticated(true)}
+      />
+    );
   }
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardPage />;
-      case 'pedidos':
+
+      case 'orders':
         return <OrdersPage />;
+
       case 'produtos':
         return <ProductsPage />;
+
       case 'categorias':
         return <CategoriesPage />;
+
       case 'configuracoes':
         return <SettingsPage />;
+
       default:
         return <DashboardPage />;
     }
   };
 
   return (
-    <AdminLayout 
-      activeTab={activeTab} 
-      setActiveTab={setActiveTab} 
+    <AdminLayout
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
       onLogout={handleLogout}
     >
       {renderContent()}

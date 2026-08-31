@@ -1,13 +1,16 @@
-import { useState } from 'react';
-import { mockProducts } from '../../data/mocks/products.mock';
+import { useState, useEffect } from 'react';
+import { productService } from '../../services/productService';
+import { categoryService } from '../../services/categoryService';
 import { ProductTable } from '../../components/products/ProductTable';
 import { ProductModal } from '../../components/products/ProductModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import type { Product } from '../../types/product';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Loader2 } from 'lucide-react';
 
 export function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,9 +19,38 @@ export function ProductsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [prodData, catData] = await Promise.all([
+        productService.getAllProducts(),
+        categoryService.getAllCategories()
+      ]);
+      
+      // Mapear dados do Supabase para o formato esperado pelo componente/tipos
+      const formattedProducts = (prodData || []).map((p: any) => ({
+        ...p,
+        categoryName: p.categories?.name || 'Sem categoria',
+        imageUrl: p.image_url || p.imageUrl || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&auto=format&fit=crop&q=60',
+        available: p.is_active ?? p.available ?? true
+      }));
+
+      setProducts(formattedProducts);
+      setCategories(catData || []);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
+    (p.categoryName && p.categoryName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleOpenAdd = () => {
@@ -36,28 +68,42 @@ export function ProductsPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSaveProduct = (data: any) => {
-    if (selectedProduct) {
-      setProducts(products.map(p => p.id === selectedProduct.id ? { ...p, ...data } : p));
-    } else {
-      const newProduct: Product = {
-        id: String(Date.now()),
+  const handleSaveProduct = async (data: any) => {
+    try {
+      const payload = {
         name: data.name,
-        categoryId: '1',
-        categoryName: data.category,
         description: data.description,
-        price: data.price,
-        imageUrl: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&auto=format&fit=crop&q=60',
-        available: data.available
+        price: Number(data.price),
+        category_id: data.categoryId || data.category_id,
+        image_url: data.imageUrl || data.image_url || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&auto=format&fit=crop&q=60',
+        is_active: data.available ?? true
       };
-      setProducts([newProduct, ...products]);
+
+      if (selectedProduct) {
+        await productService.updateProduct(selectedProduct.id, payload);
+      } else {
+        await productService.createProduct(payload);
+      }
+
+      setIsModalOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error('Erro ao guardar produto:', error);
+      alert('Erro ao guardar produto.');
     }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (productToDelete) {
-      setProducts(products.filter(p => p.id !== productToDelete.id));
-      setProductToDelete(null);
+      try {
+        await productService.deleteProduct(productToDelete.id);
+        setProductToDelete(null);
+        setIsDeleteDialogOpen(false);
+        fetchData();
+      } catch (error) {
+        console.error('Erro ao eliminar produto:', error);
+        alert('Erro ao eliminar produto.');
+      }
     }
   };
 
@@ -90,19 +136,26 @@ export function ProductsPage() {
         </div>
       </div>
 
-      <ProductTable 
-        products={filteredProducts} 
-        onEdit={handleEdit} 
-        onDelete={(id) => {
-          const prod = products.find(p => p.id === id);
-          if (prod) handleDeleteClick(prod);
-        }} 
-      />
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#5c3524]" />
+        </div>
+      ) : (
+        <ProductTable 
+          products={filteredProducts} 
+          onEdit={handleEdit} 
+          onDelete={(id) => {
+            const prod = products.find(p => p.id === id);
+            if (prod) handleDeleteClick(prod);
+          }} 
+        />
+      )}
 
       <ProductModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         product={selectedProduct}
+        categories={categories}
         onSave={handleSaveProduct}
       />
 

@@ -1,13 +1,14 @@
-import { useState } from 'react';
-import { mockCategories } from '../../data/mocks/categories.mock';
+import { useState, useEffect } from 'react';
+import { categoryService } from '../../services/categoryService';
 import { CategoryTable } from '../../components/categories/CategoryTable';
 import { CategoryModal } from '../../components/categories/CategoryModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import type { Category } from '../../types';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Loader2 } from 'lucide-react';
 
 export function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,9 +17,25 @@ export function CategoriesPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const data = await categoryService.getAllCategories();
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   const filteredCategories = categories.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.description && c.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleOpenAdd = () => {
@@ -36,24 +53,40 @@ export function CategoriesPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSaveCategory = (data: any) => {
-    if (selectedCategory) {
-      setCategories(categories.map(c => c.id === selectedCategory.id ? { ...c, ...data } : c));
-    } else {
-      const newCategory: Category = {
-        id: String(Date.now()),
-        name: data.name,
-        description: data.description,
-        productCount: 0
-      };
-      setCategories([newCategory, ...categories]);
+  const handleSaveCategory = async (data: any) => {
+    try {
+      const slug = data.name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-');
+
+      await categoryService.createCategory({ 
+        name: data.name, 
+        slug, 
+        description: data.description 
+      });
+
+      setIsModalOpen(false);
+      fetchCategories();
+    } catch (error) {
+      console.error('Erro ao guardar categoria:', error);
+      alert('Erro ao guardar categoria.');
     }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (categoryToDelete) {
-      setCategories(categories.filter(c => c.id !== categoryToDelete.id));
-      setCategoryToDelete(null);
+      try {
+        await categoryService.deleteCategory(categoryToDelete.id);
+        setCategoryToDelete(null);
+        setIsDeleteDialogOpen(false);
+        fetchCategories();
+      } catch (error) {
+        console.error('Erro ao eliminar categoria:', error);
+        alert('Erro ao eliminar categoria.');
+      }
     }
   };
 
@@ -86,14 +119,20 @@ export function CategoriesPage() {
         </div>
       </div>
 
-      <CategoryTable 
-        categories={filteredCategories} 
-        onEdit={handleEdit} 
-        onDelete={(id) => {
-          const cat = categories.find(c => c.id === id);
-          if (cat) handleDeleteClick(cat);
-        }} 
-      />
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#5c3524]" />
+        </div>
+      ) : (
+        <CategoryTable 
+          categories={filteredCategories} 
+          onEdit={handleEdit} 
+          onDelete={(id) => {
+            const cat = categories.find(c => c.id === id);
+            if (cat) handleDeleteClick(cat);
+          }} 
+        />
+      )}
 
       <CategoryModal 
         isOpen={isModalOpen}
