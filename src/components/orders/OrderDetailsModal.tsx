@@ -148,9 +148,6 @@ export function OrderDetailsModal({ isOpen, onClose, order, onSave }: OrderDetai
           >
             <option value="pending_payment">Pendente (Pagamento)</option>
             <option value="confirmed">Pagamento Confirmado</option>
-            <option value="production">Em Produção</option>
-            <option value="completed">Concluído</option>
-            <option value="cancelled">Cancelado</option>
           </select>
         </div>
 

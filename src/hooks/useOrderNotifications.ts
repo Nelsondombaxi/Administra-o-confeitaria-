@@ -5,10 +5,24 @@ import type { NotificationItemData } from '../types';
 export function useOrderNotifications() {
   const [notifications, setNotifications] = useState<NotificationItemData[]>([]);
   const [activeToast, setActiveToast] = useState<NotificationItemData | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
 
   useEffect(() => {
-    audioRef.current = new Audio('/sounds/notification.mp3');
+    const fetchAudio = async () => {
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        audioContextRef.current = new AudioCtx();
+
+        const response = await fetch('/sounds/notification.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        audioBufferRef.current = await audioContextRef.current.decodeAudioData(arrayBuffer);
+      } catch (err) {
+        console.warn('Erro ao carregar/decodificar o áudio:', err);
+      }
+    };
+
+    fetchAudio();
 
     const channel = supabase
       .channel('realtime-orders')
@@ -50,11 +64,21 @@ export function useOrderNotifications() {
           setNotifications((prev) => [newNotification, ...prev]);
           setActiveToast(newNotification);
 
-          if (audioRef.current) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch((err) => {
-              console.warn('O navegador bloqueou o som por falta de clique na página:', err);
-            });
+          if (audioContextRef.current && audioBufferRef.current) {
+            if (audioContextRef.current.state === 'suspended') {
+              audioContextRef.current.resume();
+            }
+
+            const source = audioContextRef.current.createBufferSource();
+            const gainNode = audioContextRef.current.createGain();
+
+            source.buffer = audioBufferRef.current;
+            gainNode.gain.value = 3.0; // Multiplica o volume original por 3 (300%)
+
+            source.connect(gainNode);
+            gainNode.connect(audioContextRef.current.destination);
+
+            source.start(0);
           }
         }
       )

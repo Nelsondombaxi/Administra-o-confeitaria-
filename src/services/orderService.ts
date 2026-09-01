@@ -1,7 +1,6 @@
 import { supabase } from '../lib/supabase';
 
 export const orderService = {
-  // Obter todas as encomendas com os dados do produto (Admin)
   async getAllOrders() {
     const { data, error } = await supabase
       .from('orders')
@@ -12,11 +11,15 @@ export const orderService = {
     return data;
   },
 
-  // Atualizar o status de uma encomenda ou dados de pagamento (Admin)
   async updateOrderStatus(id: string, updates: { payment_status?: string; status?: string }) {
+    const payload = {
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
     const { data, error } = await supabase
       .from('orders')
-      .update(updates)
+      .update(payload)
       .eq('id', id)
       .select()
       .single();
@@ -25,7 +28,6 @@ export const orderService = {
     return data;
   },
 
-  // Obter as configurações gerais (como taxas, dados de pagamento, etc.)
   async getSettings() {
     const { data, error } = await supabase
       .from('settings')
@@ -36,7 +38,6 @@ export const orderService = {
     return data;
   },
 
-  // Atualizar as configurações gerais (Admin)
   async updateSettings(settingsData: any) {
     const { data, error } = await supabase
       .from('settings')

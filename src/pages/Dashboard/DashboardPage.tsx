@@ -10,34 +10,58 @@ export function DashboardPage({ onNavigate }: { onNavigate: (tab: string) => voi
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchDashboardData() {
-      try {
-        setLoading(true);
-
-        const ordersData = await orderService.getAllOrders();
-        if (ordersData) {
-          setTotalOrders(ordersData.length);
-          const pending = ordersData.filter((item: any) => !item.status || item.status === 'pending');
-          setPendingCount(pending.length);
-          setRecentOrders(ordersData.slice(0, 3));
-        }
-
-        const { count, error } = await supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true });
-
-        if (!error && count !== null) {
-          setActiveProductsCount(count);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar dados do dashboard:', error);
-      } finally {
-        setLoading(false);
+  const fetchDashboardData = async () => {
+    try {
+      const ordersData = await orderService.getAllOrders();
+      if (ordersData) {
+        setTotalOrders(ordersData.length);
+        
+        const pending = ordersData.filter(
+          (item: any) =>
+            !item.status ||
+            item.status === 'pending' ||
+            item.status === 'pending_payment'
+        );
+        setPendingCount(pending.length);
+        setRecentOrders(ordersData.slice(0, 3));
       }
-    }
 
+      const { count, error } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      if (!error && count !== null) {
+        setActiveProductsCount(count);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDashboardData();
+
+    const channel = supabase
+      .channel('dashboard-orders-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+        },
+        () => {
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   if (loading) {
@@ -102,9 +126,9 @@ export function DashboardPage({ onNavigate }: { onNavigate: (tab: string) => voi
                 currency: 'AOA',
               }).format(rawTotal).replace('AOA', 'Kz');
 
-              const isPending = !order.status || order.status === 'pending';
+              const isPending = !order.status || order.status === 'pending' || order.status === 'pending_payment';
               const customerName = order.customer_name || 'Cliente';
-              const productName = order.product_name || 'Produto';
+              const productName = order.products?.name || order.product_name || order.productName || 'Produto';
 
               return (
                 <div key={order.id} className="flex items-center justify-between p-3.5 bg-[#fdfbf7] rounded-xl border border-[#e6dec5]/60 hover:bg-[#f4efe6]/50 transition-colors">
