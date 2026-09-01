@@ -77,7 +77,7 @@ export function DashboardPage({ onNavigate }: { onNavigate: (tab: string) => voi
       <div className="bg-[#f4efe6] p-6 rounded-2xl border border-[#e6dec5] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-[#2b1810] font-serif">Raquel Dombaxi</h1>
-          <p className="text-sm text-[#5c3524] mt-1">Aqui está o resumo executivo da confeitaria Veyra.</p>
+          <p className="text-sm text-[#5c3524] mt-1">Aqui está o resumo executivo da confeitaria.</p>
         </div>
       </div>
 
