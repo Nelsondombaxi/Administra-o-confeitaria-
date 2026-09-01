@@ -22,26 +22,33 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose, activeTab, setActiveTab, onLogout }: SidebarProps) {
   const [pendingCount, setPendingCount] = useState<string | undefined>(undefined);
+  const [systemName, setSystemName] = useState('VEYRA');
+  const [adminName, setAdminName] = useState('Raquel Dombaxi');
 
   useEffect(() => {
-    async function fetchPendingOrdersCount() {
+    async function loadSidebarData() {
       try {
-        const data = await orderService.getAllOrders();
-        if (data) {
-          const pending = data.filter((item: any) => !item.status || item.status === 'pending');
-          if (pending.length > 0) {
-            setPendingCount(String(pending.length));
-          } else {
-            setPendingCount(undefined);
-          }
+        const [ordersData, settingsData] = await Promise.all([
+          orderService.getAllOrders(),
+          orderService.getSettings()
+        ]);
+
+        if (ordersData) {
+          const pending = ordersData.filter((item: any) => !item.status || item.status === 'pending');
+          setPendingCount(pending.length > 0 ? String(pending.length) : undefined);
+        }
+
+        if (settingsData) {
+          if (settingsData.admin_system_name) setSystemName(settingsData.admin_system_name);
+          if (settingsData.admin_dashboard_name) setAdminName(settingsData.admin_dashboard_name);
         }
       } catch (error) {
-        console.error('Erro ao carregar contagem de pedidos:', error);
+        console.error('Erro ao carregar dados da Sidebar:', error);
       }
     }
 
-    fetchPendingOrdersCount();
-  }, []);
+    loadSidebarData();
+  }, [activeTab]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -66,7 +73,7 @@ export function Sidebar({ isOpen, onClose, activeTab, setActiveTab, onLogout }: 
       `}>
         <div className="p-6 border-b border-[#3d2318] flex justify-between items-center">
           <div>
-            <h1 className="text-[#c5a059] font-black text-xl tracking-widest font-serif">VEYRA</h1>
+            <h1 className="text-[#c5a059] font-black text-xl tracking-widest font-serif uppercase">{systemName}</h1>
             <p className="text-[10px] text-[#b87351] font-medium uppercase tracking-wider">Painel Administrativo</p>
           </div>
           <button 
@@ -96,12 +103,12 @@ export function Sidebar({ isOpen, onClose, activeTab, setActiveTab, onLogout }: 
 
         <div className="p-4 border-t border-[#3d2318] space-y-3">
           <div className="flex items-center gap-3 px-3 py-2.5 bg-[#3d2318]/40 rounded-xl border border-[#3d2318]">
-            <div className="w-9 h-9 rounded-full bg-[#c5a059]/20 text-[#c5a059] flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-full bg-[#c5a059]/20 text-[#c5a059] flex items-center justify-center font-bold shrink-0">
               <User className="w-5 h-5" />
             </div>
             <div className="overflow-hidden">
-              <p className="text-xs font-bold text-[#f4efe6] truncate">Raquel Dombaxi</p>
-              <p className="text-[10px] text-[#b87351] truncate">raquel@veyra.com</p>
+              <p className="text-xs font-bold text-[#f4efe6] truncate">{adminName}</p>
+              <p className="text-[10px] text-[#b87351] truncate">Administrador</p>
             </div>
           </div>
 

@@ -3,11 +3,12 @@ import { orderService } from '../../services/orderService';
 import { VitrineSettingsCard } from '../../components/settings/VitrineSettingsCard';
 import { PaymentSettingsCard } from '../../components/settings/PaymentSettingsCard';
 import { AdminSettingsCard } from '../../components/settings/AdminSettingsCard';
-import { Save, Loader2 } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, X } from 'lucide-react';
 
 export function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sucesso, setSucesso] = useState(false);
   const [settingsId, setSettingsId] = useState<string | number | null>(null);
 
   const [formData, setFormData] = useState({
@@ -66,11 +67,17 @@ export function SettingsPage() {
         ...formData,
         updated_at: new Date().toISOString(),
       };
-      await orderService.updateSettings(payload);
-      alert('Configurações guardadas com sucesso!');
+
+      const updated = await orderService.updateSettings(payload);
+
+      if (updated?.id) {
+        setSettingsId(updated.id);
+      }
+
+      setSucesso(true);
+      setTimeout(() => setSucesso(false), 4000);
     } catch (error) {
       console.error('Erro ao guardar configurações:', error);
-      alert('Erro ao guardar configurações.');
     } finally {
       setSaving(false);
     }
@@ -85,7 +92,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl pb-12">
+    <div className="space-y-6 max-w-4xl pb-12 relative">
       <div className="bg-[#f4efe6] p-6 rounded-2xl border border-[#e6dec5] shadow-sm flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-[#2b1810] font-serif">Definições do Sistema</h1>
@@ -127,6 +134,32 @@ export function SettingsPage() {
           </button>
         </div>
       </form>
+
+      {sucesso && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#fffdf9] rounded-[2rem] max-w-sm w-full overflow-hidden shadow-2xl border border-stone-200 animate-in zoom-in-95 duration-300 transition-all">
+            <div className="bg-[#3d2314] text-white p-4 flex justify-between items-center relative">
+              <span className="font-bold text-sm tracking-tight">Sistema</span>
+              <button
+                type="button"
+                onClick={() => setSucesso(false)}
+                className="w-8 h-8 rounded-full bg-[#52321c] flex items-center justify-center hover:bg-[#633e24] transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4 text-stone-200" />
+              </button>
+            </div>
+            <div className="p-8 text-center space-y-3">
+              <div className="w-16 h-16 bg-[#3d2314]/10 text-[#3d2314] rounded-full flex items-center justify-center mx-auto animate-bounce">
+                <CheckCircle2 className="w-10 h-10" />
+              </div>
+              <h4 className="text-xl font-black text-[#3d2314]">Configurações Guardadas!</h4>
+              <p className="text-sm text-stone-600 font-medium">
+                As alterações foram aplicadas com sucesso no sistema e na vitrine.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

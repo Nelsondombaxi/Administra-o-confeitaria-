@@ -32,20 +32,35 @@ export const orderService = {
     const { data, error } = await supabase
       .from('settings')
       .select('*')
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (error) throw error;
     return data;
   },
 
   async updateSettings(settingsData: any) {
-    const { data, error } = await supabase
-      .from('settings')
-      .update(settingsData)
-      .select()
-      .single();
+    const { id, ...payload } = settingsData;
 
-    if (error) throw error;
-    return data;
+    if (id) {
+      const { data, error } = await supabase
+        .from('settings')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } else {
+      const { data, error } = await supabase
+        .from('settings')
+        .insert([payload])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
   }
 };
