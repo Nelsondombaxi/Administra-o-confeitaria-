@@ -1,26 +1,24 @@
 import { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { NotificationPanel } from './NotificationPanel';
-import { mockNotifications } from '../../data/mocks/notifications.mock';
-import type { NotificationItemData } from '../../types';
+import { NotificationToast } from './NotificationToast';
+import { useOrderNotifications } from '../../hooks/useOrderNotifications';
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItemData[]>(mockNotifications);
+  const {
+    notifications,
+    activeToast,
+    closeToast,
+    handleMarkAsRead,
+    handleMarkAllAsRead,
+  } = useOrderNotifications();
 
-  const unreadCount = notifications.filter(n => n.unread).length;
-
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
-  };
-
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-  };
+  const unreadCount = notifications.filter((n) => n.unread).length;
 
   return (
     <div className="relative">
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-[#f4efe6] hover:bg-[#e6dec5] flex items-center justify-center text-[#5c3524] transition-all cursor-pointer relative border border-[#e6dec5]"
       >
@@ -32,13 +30,15 @@ export function NotificationBell() {
         )}
       </button>
 
-      <NotificationPanel 
+      <NotificationPanel
         isOpen={isOpen}
         notifications={notifications}
         onClose={() => setIsOpen(false)}
         onMarkAsRead={handleMarkAsRead}
         onMarkAllAsRead={handleMarkAllAsRead}
       />
+
+      <NotificationToast toast={activeToast} onClose={closeToast} />
     </div>
   );
 }
