@@ -1,75 +1,36 @@
-# React + TypeScript + Vite
+🍰 Veyra Confeitaria — Vitrine & Catálogo Digital
+A Veyra Confeitaria é uma plataforma digital de comércio eletrónico e vitrine interativa desenvolvida para revolucionar a experiência de encomenda de doces artesanais, combinando uma interface elegante com comunicação direta via WhatsApp e sincronização em tempo real através do Supabase. O sistema resolve o problema da fricção nos pedidos online, unificando a apresentação visual do cardápio, a gestão dinâmica de categorias e um fluxo de checkout ágil em um único ambiente limpo, rápido e responsivo.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+O seu principal objetivo é oferecer uma experiência de compra fluida e acolhedora, integrando atualizações instantâneas de produtos, controlo de stock e um design sofisticado com paleta âmbar/dourado (#2b1810, #c5a059). Tudo isso construído com foco total em performance e integração direta com o painel administrativo através da nuvem.
 
-Currently, two official plugins are available:
+🚀 Tecnologias Utilizadas
+💻 Core & Interface
+React (Vite) — Biblioteca principal para a estruturação dos componentes e reatividade da interface com tempos de build extremamente rápidos.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+TypeScript / JavaScript (ES6+) — Linguagem base para tipagem segura, lógica de estado e manipulação eficiente de dados.
 
-## React Compiler
+Tailwind CSS — Estilização moderna com design responsivo, utilitários avançados e paleta visual personalizada.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Lucide React — Biblioteca de ícones vetoriais modernos para navegação, botões e interface de usuário.
 
-## Expanding the ESLint configuration
+☁️ Backend & Sincronização
+Supabase — Plataforma Backend-as-a-Service (BaaS) baseada em PostgreSQL, responsável por gerir a base de dados relacional na nuvem e escutar alterações em tempo real.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Netlify — Plataforma de deploy contínuo, alojamento web e gestão de rotas SPA através de redirecionamentos otimizados.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+⚙️ Como Funciona a Arquitetura e a Interligação com o Admin
+A Vitrine e o Painel Administrativo (Admin) funcionam como dois ecossistemas independentes no frontend (desdobrados separadamente na Netlify), mas totalmente interligados através da mesma base de dados no Supabase:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Gestão Centralizada de Produtos: Quando o administrador atualiza um preço, altera a descrição de um bolo ou adiciona uma nova categoria no painel de administração, essas alterações são gravadas instantaneamente nas tabelas do Supabase.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Atualização em Tempo Real na Vitrine: Graças aos clientes e ouvintes de dados do Supabase configurados na Vitrine, qualquer alteração feita pelo pasteleiro/admin reflete-se de imediato para os clientes que estão a navegar no catálogo digital, sem necessidade de atualizar a página.
 
-```
+Fluxo de Encomendas Integrado:
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+O cliente escolhe os produtos na Vitrine e submete o pedido.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+O pedido é inserido diretamente na tabela orders do Supabase.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+O Painel Administrativo capta esse novo pedido em tempo real, permitindo ao pasteleiro gerir o estado da produção, atualizar o progresso e disparar mensagens ou notificações via WhatsApp.
 
-```
+O sistema conta com rotinas de limpeza automática de pedidos confirmados para manter a base de dados sempre limpa e organizada.
