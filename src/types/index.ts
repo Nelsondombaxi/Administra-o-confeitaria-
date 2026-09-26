@@ -4,7 +4,7 @@ export interface Product {
   description: string;
   price: number;
   imageUrl: string;
-  categoryId: string;
+  categoryId: string | null;
   categoryName: string;
   available: boolean;
 }
@@ -12,17 +12,45 @@ export interface Product {
 export interface Category {
   id: string;
   name: string;
-  description?: string;
+  slug: string;
+  description: string;
+  imageUrl: string;
   productCount: number;
 }
+
+export type OrderStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'production'
+  | 'completed';
+
+export type PaymentMethod =
+  | 'IBAN'
+  | 'EXPRESS'
+  | string;
+
+export type PaymentStatus =
+  | 'pending_payment'
+  | 'paid'
+  | 'failed'
+  | 'refunded'
+  | string;
 
 export interface Order {
   id: string;
   customerName: string;
+  customerPhone: string;
+  customerAddress: string;
   productName: string;
+  quantity: number;
+  total: number;
   totalValue: number;
-  status: 'pending' | 'confirmed' | 'production' | 'completed';
+  status: OrderStatus;
   createdAt: string;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  paymentProofUrl: string;
+  notes: string;
 }
 
 export interface NotificationItemData {

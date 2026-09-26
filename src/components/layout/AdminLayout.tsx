@@ -1,34 +1,55 @@
 import { useState, type ReactNode } from 'react';
+
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { AdminSettingsProvider } from '../../contexts/AdminSettingsContext';
+
+type ActiveTab =
+  | 'dashboard'
+  | 'orders'
+  | 'produtos'
+  | 'categorias'
+  | 'configuracoes';
 
 interface AdminLayoutProps {
   children: ReactNode;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: ActiveTab;
+  setActiveTab: (tab: ActiveTab) => void;
   onLogout: () => void;
 }
 
-export default function AdminLayout({ children, activeTab, setActiveTab, onLogout }: AdminLayoutProps) {
+export default function AdminLayout({
+  children,
+  activeTab,
+  setActiveTab,
+  onLogout,
+}: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const handleTabChange = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    setSidebarOpen(false);
+  };
+
   return (
-    <div className="min-h-screen bg-[#fdfbf7] flex font-sans text-[#2b1810]">
-      <Sidebar 
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onLogout={onLogout}
-      />
+    <AdminSettingsProvider>
+      <div className="min-h-screen bg-[#fdfbf7] font-sans text-[#2b1810]">
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          activeTab={activeTab}
+          setActiveTab={handleTabChange}
+          onLogout={onLogout}
+        />
 
-      <div className="flex-1 flex flex-col md:pl-64 w-full min-w-0">
-        <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
+        <div className="flex min-h-screen w-full min-w-0 flex-col md:pl-64">
+          <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
-          {children}
-        </main>
+          <main className="flex-1 overflow-x-hidden p-4 md:p-8">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminSettingsProvider>
   );
 }

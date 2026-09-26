@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import AdminLayout from './components/layout/AdminLayout';
 
@@ -9,34 +9,43 @@ import { OrdersPage } from './pages/Orders/OrdersPage';
 import { SettingsPage } from './pages/Settings/SettingsPage';
 import { LoginPage } from './pages/Login/LoginPage';
 
+const AUTH_STORAGE_KEY = 'veyra_auth';
+
+type ActiveTab =
+  | 'dashboard'
+  | 'orders'
+  | 'produtos'
+  | 'categorias'
+  | 'configuracoes';
+
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('veyra_auth') === 'true';
-  });
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => localStorage.getItem(AUTH_STORAGE_KEY) === 'true'
+  );
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
 
   useEffect(() => {
-    localStorage.setItem('veyra_auth', isAuthenticated ? 'true' : 'false');
+    if (isAuthenticated) {
+      localStorage.setItem(AUTH_STORAGE_KEY, 'true');
+    } else {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
   }, [isAuthenticated]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('veyra_auth');
-    setIsAuthenticated(false);
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    setActiveTab('dashboard');
   };
 
-  if (!isAuthenticated) {
-    return (
-      <LoginPage
-        onLoginSuccess={() => setIsAuthenticated(true)}
-      />
-    );
-  }
+  const handleLogout = () => {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    setIsAuthenticated(false);
+    setActiveTab('dashboard');
+  };
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <DashboardPage onNavigate={setActiveTab} />;
-
       case 'orders':
         return <OrdersPage />;
 
@@ -49,10 +58,15 @@ export default function App() {
       case 'configuracoes':
         return <SettingsPage />;
 
+      case 'dashboard':
       default:
         return <DashboardPage onNavigate={setActiveTab} />;
     }
   };
+
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
 
   return (
     <AdminLayout

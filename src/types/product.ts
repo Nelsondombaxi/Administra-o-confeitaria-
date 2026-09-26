@@ -4,7 +4,7 @@ export interface Product {
   description: string;
   price: number;
   imageUrl: string;
-  categoryId: string;
+  categoryId: string | null;
   categoryName: string;
   available: boolean;
 }

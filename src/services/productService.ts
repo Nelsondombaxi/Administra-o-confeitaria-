@@ -1,62 +1,173 @@
 import { supabase } from '../lib/supabase';
 
+export interface ProductPayload {
+  name: string;
+  description?: string;
+  price: number;
+  category_id?: string | null;
+  image_url?: string | null;
+  is_active?: boolean;
+}
+
+export interface ProductRecord extends ProductPayload {
+  id: string;
+  created_at: string;
+  updated_at?: string | null;
+
+  // Relação com categories no Supabase
+  categories?: {
+    id: string;
+    name: string;
+    slug?: string;
+    description?: string | null;
+    image_url?: string | null;
+  } | null;
+
+  // Compatibilidade com o formato usado na interface
+  imageUrl?: string;
+  available?: boolean;
+}
+
 export const productService = {
-  // Obter todos os produtos ativos (para a vitrine)
-  async getActiveProducts() {
+  /**
+   * Obtém apenas os produtos ativos.
+   * Usado principalmente pela vitrine.
+   */
+  async getActiveProducts(): Promise<ProductRecord[]> {
     const { data, error } = await supabase
       .from('products')
       .select('*, categories(*)')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.error(
+        'Erro ao buscar produtos ativos:',
+        error
+      );
+
+      throw error;
+    }
+
+    return (data ?? []) as ProductRecord[];
   },
 
-  // Obter todos os produtos (para o painel administrativo)
-  async getAllProducts() {
+  /**
+   * Obtém todos os produtos.
+   * Usado pelo painel administrativo.
+   */
+  async getAllProducts(): Promise<ProductRecord[]> {
     const { data, error } = await supabase
       .from('products')
       .select('*, categories(*)')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.error(
+        'Erro ao buscar produtos:',
+        error
+      );
+
+      throw error;
+    }
+
+    return (data ?? []) as ProductRecord[];
   },
 
-  // Criar um novo produto (Admin)
-  async createProduct(productData: any) {
+  /**
+   * Cria um novo produto.
+   */
+  async createProduct(
+    productData: ProductPayload
+  ): Promise<ProductRecord> {
+    const payload: ProductPayload = {
+      name: productData.name.trim(),
+      description: productData.description?.trim() ?? '',
+      price: Number(productData.price),
+      category_id: productData.category_id ?? null,
+      image_url: productData.image_url ?? null,
+      is_active: productData.is_active ?? true,
+    };
+
     const { data, error } = await supabase
       .from('products')
-      .insert([productData])
+      .insert(payload)
       .select()
       .single();
 
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.error(
+        'Erro ao criar produto:',
+        error
+      );
+
+      throw error;
+    }
+
+    return data as ProductRecord;
   },
 
-  // Atualizar produto (Admin)
-  async updateProduct(id: string, productData: any) {
+  /**
+   * Atualiza um produto existente.
+   */
+  async updateProduct(
+    id: string,
+    productData: ProductPayload
+  ): Promise<ProductRecord> {
+    if (!id) {
+      throw new Error('ID do produto não informado.');
+    }
+
+    const payload: ProductPayload = {
+      name: productData.name.trim(),
+      description: productData.description?.trim() ?? '',
+      price: Number(productData.price),
+      category_id: productData.category_id ?? null,
+      image_url: productData.image_url ?? null,
+      is_active: productData.is_active ?? true,
+    };
+
     const { data, error } = await supabase
       .from('products')
-      .update(productData)
+      .update(payload)
       .eq('id', id)
       .select()
       .single();
 
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.error(
+        `Erro ao atualizar produto ${id}:`,
+        error
+      );
+
+      throw error;
+    }
+
+    return data as ProductRecord;
   },
 
-  // Remover produto (Admin)
-  async deleteProduct(id: string) {
+  /**
+   * Elimina um produto.
+   */
+  async deleteProduct(id: string): Promise<boolean> {
+    if (!id) {
+      throw new Error('ID do produto não informado.');
+    }
+
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error(
+        `Erro ao eliminar produto ${id}:`,
+        error
+      );
+
+      throw error;
+    }
+
     return true;
-  }
+  },
 };

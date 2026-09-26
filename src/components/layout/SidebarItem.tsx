@@ -1,31 +1,52 @@
-import React from 'react';
+import type { ComponentType } from 'react';
 
 interface SidebarItemProps {
-  id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   badge?: string;
   isActive: boolean;
   onClick: () => void;
 }
 
-export function SidebarItem({ label, icon: Icon, badge, isActive, onClick }: SidebarItemProps) {
+export function SidebarItem({
+  label,
+  icon: Icon,
+  badge,
+  isActive,
+  onClick,
+}: SidebarItemProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-current={isActive ? 'page' : undefined}
       className={`
-        w-full flex items-center justify-between px-4 py-3 rounded-xl font-medium text-sm transition-all cursor-pointer
-        ${isActive 
-          ? 'bg-[#5c3524] text-white shadow-sm font-bold border-l-4 border-[#c5a059]' 
-          : 'hover:bg-[#3d2318] hover:text-white text-[#f4efe6]/70'}
+        flex w-full cursor-pointer items-center justify-between
+        rounded-xl px-4 py-3 text-sm font-medium
+        transition-all duration-200
+        ${
+          isActive
+            ? 'border-l-4 border-[#c5a059] bg-[#5c3524] font-bold text-white shadow-sm'
+            : 'text-[#f4efe6]/70 hover:bg-[#3d2318] hover:text-white'
+        }
       `}
     >
-      <div className="flex items-center gap-3">
-        <Icon className={`w-5 h-5 ${isActive ? 'text-[#c5a059]' : 'text-[#b87351]'}`} />
+      <span className="flex items-center gap-3">
+        <Icon
+          aria-hidden="true"
+          className={`h-5 w-5 transition-colors ${
+            isActive ? 'text-[#c5a059]' : 'text-[#b87351]'
+          }`}
+        />
+
         <span>{label}</span>
-      </div>
+      </span>
+
       {badge && (
-        <span className="bg-[#c5a059] text-[#2b1810] text-[10px] font-black px-2 py-0.5 rounded-full">
+        <span
+          aria-label={`${badge} pedidos pendentes`}
+          className="rounded-full bg-[#c5a059] px-2 py-0.5 text-[10px] font-black text-[#2b1810]"
+        >
           {badge}
         </span>
       )}

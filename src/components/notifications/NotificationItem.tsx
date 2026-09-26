@@ -1,47 +1,108 @@
+import {
+  Bell,
+  Check,
+  CheckCircle,
+  FileText,
+} from 'lucide-react';
+
 import type { NotificationItemData } from '../../types';
-import { Bell, FileText, CheckCircle } from 'lucide-react';
 
 interface NotificationItemProps {
   notification: NotificationItemData;
   onMarkAsRead: (id: string) => void;
 }
 
-export function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
+export function NotificationItem({
+  notification,
+  onMarkAsRead,
+}: NotificationItemProps) {
   const icons = {
     order: Bell,
     proof: FileText,
   };
 
-  const IconComponent = icons[notification.type] || CheckCircle;
+  const IconComponent =
+    icons[notification.type] || CheckCircle;
 
   return (
-    <div 
-      onClick={() => onMarkAsRead(notification.id)}
-      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
-        notification.unread 
-          ? 'bg-[#f4efe6]/70 border-[#c5a059]/40 hover:bg-[#f4efe6]' 
-          : 'bg-white border-[#e6dec5] hover:bg-[#fdfbf7]'
+    <button
+      type="button"
+      onClick={() =>
+        onMarkAsRead(notification.id)
+      }
+      className={`group flex w-full cursor-pointer items-start gap-3 rounded-xl border p-3.5 text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#c5a059]/40 ${
+        notification.unread
+          ? 'border-[#c5a059]/30 bg-[#f4efe6]/80 hover:border-[#c5a059]/50 hover:bg-[#f4efe6]'
+          : 'border-[#e6dec5]/70 bg-white hover:border-[#c5a059]/30 hover:bg-[#fdfbf7]'
       }`}
     >
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
-        notification.unread 
-          ? 'bg-[#5c3524] text-[#fdfbf7] border-[#5c3524]' 
-          : 'bg-[#f4efe6] text-[#8c5338] border-[#e6dec5]'
-      }`}>
-        <IconComponent className="w-4 h-4" />
+      {/* Ícone */}
+      <div
+        className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all duration-200 ${
+          notification.unread
+            ? 'border-[#5c3524] bg-[#5c3524] text-[#fdfbf7] shadow-sm'
+            : 'border-[#e6dec5] bg-[#f4efe6] text-[#8c5338]'
+        }`}
+      >
+        <IconComponent
+          className="h-4 w-4"
+          aria-hidden="true"
+        />
+
+        {notification.unread && (
+          <span
+            aria-hidden="true"
+            className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-[#f4efe6] bg-[#c5a059]"
+          />
+        )}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <h5 className="text-xs font-bold text-[#2b1810] font-serif truncate">{notification.title}</h5>
-          <span className="text-[10px] text-[#8c5338] shrink-0">{notification.timestamp}</span>
+      {/* Conteúdo */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <h5
+            className={`min-w-0 truncate font-serif text-xs ${
+              notification.unread
+                ? 'font-black text-[#2b1810]'
+                : 'font-bold text-[#5c3524]'
+            }`}
+            title={notification.title}
+          >
+            {notification.title}
+          </h5>
+
+          {notification.timestamp && (
+            <span className="shrink-0 pt-0.5 text-[9px] font-medium text-[#a4775e]">
+              {notification.timestamp}
+            </span>
+          )}
         </div>
-        <p className="text-xs text-[#5c3524] mt-0.5 line-clamp-2">{notification.description}</p>
-      </div>
 
-      {notification.unread && (
-        <span className="w-2 h-2 rounded-full bg-[#c5a059] shrink-0 self-center" />
-      )}
-    </div>
+        <p
+          className={`mt-1 line-clamp-2 text-[10px] leading-4 ${
+            notification.unread
+              ? 'text-[#5c3524]'
+              : 'text-[#8c5338]'
+          }`}
+        >
+          {notification.description}
+        </p>
+
+        {notification.unread && (
+          <div className="mt-2 flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#c5a059]" />
+
+            <span className="text-[9px] font-bold text-[#8c5338] transition-colors duration-200 group-hover:text-[#2b1810]">
+              Não lida
+            </span>
+
+            <Check
+              className="h-3 w-3 text-[#c5a059] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+              aria-hidden="true"
+            />
+          </div>
+        )}
+      </div>
+    </button>
   );
 }

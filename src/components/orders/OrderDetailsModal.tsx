@@ -1,170 +1,402 @@
-import { useState, useEffect } from 'react';
+import {
+  useEffect,
+  useState,
+  type FormEvent,
+} from 'react';
+import {
+  AlertCircle,
+  Cake,
+  CheckCircle2,
+  CreditCard,
+  FileText,
+  Loader2,
+  MapPin,
+  MessageSquare,
+  PackageCheck,
+  Phone,
+  User,
+} from 'lucide-react';
 import { Modal } from '../ui/Modal';
-import { User, Cake, CreditCard, FileText, CheckCircle2, MessageSquare } from 'lucide-react';
+import type { Order } from '../../types';
 
 interface OrderDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  order: any;
-  onSave: (updatedStatus: string) => void;
+  order: Order | null;
+  onSave: (
+    updatedStatus: string,
+  ) => void | Promise<void>;
 }
 
-export function OrderDetailsModal({ isOpen, onClose, order, onSave }: OrderDetailsModalProps) {
-  const [status, setStatus] = useState('pending_payment');
+export function OrderDetailsModal({
+  isOpen,
+  onClose,
+  order,
+  onSave,
+}: OrderDetailsModalProps) {
+  const [status, setStatus] = useState('pending');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (order) {
-      setStatus(order.status || 'pending_payment');
+      const currentStatus = order.status || 'pending';
+      setStatus(
+        currentStatus === 'confirmed'
+          ? 'production'
+          : currentStatus,
+      );
     }
   }, [order]);
 
-  if (!order) return null;
+  if (!order) {
+    return null;
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(status);
-    onClose();
+  const handleSubmit = async (
+    event: FormEvent,
+  ) => {
+    event.preventDefault();
+    try {
+      setIsSaving(true);
+      await onSave(status);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-AO', {
       style: 'currency',
       currency: 'AOA',
-    }).format(amount || 0).replace('AOA', 'Kz');
+      maximumFractionDigits: 0,
+    })
+      .format(Number(amount) || 0)
+      .replace('AOA', 'Kz');
   };
 
-  const totalAmount = order.total_amount || order.totalAmount || order.totalValue || order.total || 0;
-  const depositAmount = order.deposit_amount || order.depositAmount || totalAmount * 0.5;
-  const remainingAmount = order.remaining_amount || order.remainingAmount || (totalAmount - depositAmount);
+  const totalAmount = Number(
+    order.totalValue ?? order.total ?? 0,
+  );
+  const depositAmount = totalAmount * 0.5;
+  const remainingAmount =
+    totalAmount - depositAmount;
 
-  const customerName = order.customer_name || order.customerName || 'Cliente sem nome';
-  const customerPhone = order.customer_phone || order.customerPhone || 'Sem telefone';
-  const customerAddress = order.customer_address || order.customerAddress || 'Não informada';
-  const notes = order.notes || null;
-
-  const productName = order.products?.name || order.product_name || order.productName || 'Produto não especificado';
-  const paymentMethod = order.payment_method || order.paymentMethod || 'Transferência Bancária';
-  const paymentProofUrl = order.payment_proof_url || order.paymentProofUrl || null;
+  const customerName =
+    order.customerName || 'Cliente sem nome';
+  const customerPhone =
+    order.customerPhone || 'Sem telefone';
+  const customerAddress =
+    order.customerAddress || 'Não informada';
+  const notes = order.notes || '';
+  const productName =
+    order.productName || 'Produto não especificado';
+  const quantity = Number(order.quantity ?? 1);
+  const paymentMethod =
+    order.paymentMethod || '';
+  const paymentProofUrl =
+    order.paymentProofUrl || '';
 
   const handleOpenProof = () => {
-    if (paymentProofUrl) {
-      window.open(paymentProofUrl, '_blank');
-    } else {
-      alert('Nenhum comprovativo de pagamento anexado a este pedido.');
+    if (!paymentProofUrl) {
+      return;
     }
+    window.open(
+      paymentProofUrl,
+      '_blank',
+      'noopener,noreferrer',
+    );
   };
 
-  const displayId = order.id ? `#${order.id.slice(0, 8).toUpperCase()}` : '#PED-0000';
+  const displayId = order.id
+    ? `#${order.id.slice(0, 8).toUpperCase()}`
+    : '#PED-0000';
+
+  const paymentLabel =
+    paymentMethod === 'EXPRESS'
+      ? 'MCX Express'
+      : 'Transferência Bancária';
+
+  const paymentConfirmed =
+    order.paymentStatus === 'paid';
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Pedido ${displayId}`}>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-[#c5a059] uppercase tracking-wider">
-            <User className="w-4 h-4 text-[#8c5338]" />
-            <span>Cliente</span>
-          </div>
-          <div className="bg-[#fdfbf7] p-3.5 rounded-2xl border border-[#e6dec5] space-y-1">
-            <p className="text-xs font-bold text-[#2b1810]">{customerName}</p>
-            <p className="text-[11px] text-[#5c3524]">{customerPhone}</p>
-            <p className="text-[11px] text-[#5c3524]">Morada: {customerAddress}</p>
-          </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={isSaving ? () => undefined : onClose}
+      title={`Pedido ${displayId}`}
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <section className="space-y-2">
+            <div className="flex items-center gap-2">
+              <User
+                className="h-4 w-4 text-[#8c5338]"
+                aria-hidden="true"
+              />
+
+              <h3 className="text-[11px] font-black uppercase tracking-wider text-[#5c3524]">
+                Cliente
+              </h3>
+            </div>
+
+            <div className="rounded-2xl border border-[#e6dec5] bg-[#fdfbf7] p-4">
+              <p className="text-sm font-bold text-[#2b1810]">
+                {customerName}
+              </p>
+
+              <div className="mt-2 space-y-1.5">
+                <div className="flex items-center gap-2 text-[11px] text-[#5c3524]">
+                  <Phone
+                    className="h-3.5 w-3.5 shrink-0 text-[#8c5338]"
+                    aria-hidden="true"
+                  />
+
+                  <span>{customerPhone}</span>
+                </div>
+
+                <div className="flex items-start gap-2 text-[11px] leading-4 text-[#5c3524]">
+                  <MapPin
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8c5338]"
+                    aria-hidden="true"
+                  />
+
+                  <span>{customerAddress}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Cake
+                className="h-4 w-4 text-[#8c5338]"
+                aria-hidden="true"
+              />
+
+              <h3 className="text-[11px] font-black uppercase tracking-wider text-[#5c3524]">
+                Produto
+              </h3>
+            </div>
+
+            <div className="rounded-2xl border border-[#e6dec5] bg-[#fdfbf7] p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p
+                    className="truncate text-sm font-bold text-[#2b1810]"
+                    title={productName}
+                  >
+                    {productName}
+                  </p>
+
+                  <p className="mt-1 text-[11px] font-medium text-[#8c5338]">
+                    Quantidade: {quantity}
+                  </p>
+                </div>
+
+                <span className="shrink-0 font-serif text-sm font-black text-[#2b1810]">
+                  {formatCurrency(totalAmount)}
+                </span>
+              </div>
+            </div>
+          </section>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-[#c5a059] uppercase tracking-wider">
-            <Cake className="w-4 h-4 text-[#8c5338]" />
-            <span>Produto</span>
+        <section className="space-y-2">
+          <div className="flex items-center gap-2">
+            <CreditCard
+              className="h-4 w-4 text-[#8c5338]"
+              aria-hidden="true"
+            />
+
+            <h3 className="text-[11px] font-black uppercase tracking-wider text-[#5c3524]">
+              Pagamento
+            </h3>
           </div>
-          <div className="bg-[#fdfbf7] p-3.5 rounded-2xl border border-[#e6dec5] space-y-2">
-            <div className="flex justify-between items-start">
+
+          <div className="rounded-2xl border border-[#e6dec5] bg-[#fdfbf7] p-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs font-bold text-[#2b1810]">{productName}</p>
-                <p className="text-[11px] text-[#5c3524] font-medium">Quantidade: 1</p>
-              </div>
-              <div className="text-right">
-                <span className="text-xs font-extrabold text-[#2b1810] block">{formatCurrency(totalAmount)}</span>
-              </div>
-            </div>
+                <p className="text-sm font-bold text-[#2b1810]">
+                  {paymentLabel}
+                </p>
 
-            <div className="pt-2 border-t border-[#e6dec5]/60 grid grid-cols-2 gap-2 text-[11px]">
-              <div className="bg-amber-50/60 p-2 rounded-xl border border-amber-200/50">
-                <span className="text-amber-800/80 block text-[10px] font-semibold">Sinal Pago (50%)</span>
-                <span className="font-bold text-amber-950">{formatCurrency(depositAmount)}</span>
+                <div className="mt-1 flex items-center gap-2">
+                  {paymentConfirmed ? (
+                    <>
+                      <CheckCircle2
+                        className="h-3.5 w-3.5 text-green-600"
+                        aria-hidden="true"
+                      />
+
+                      <span className="text-[11px] font-semibold text-green-700">
+                        Pagamento confirmado
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle
+                        className="h-3.5 w-3.5 text-amber-600"
+                        aria-hidden="true"
+                      />
+
+                      <span className="text-[11px] font-semibold text-amber-700">
+                        Aguardando confirmação
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="bg-stone-100/70 p-2 rounded-xl border border-stone-200/60">
-                <span className="text-stone-600 block text-[10px] font-semibold">Restante a Pagar</span>
-                <span className="font-bold text-stone-900">{formatCurrency(remainingAmount)}</span>
-              </div>
+
+              {paymentProofUrl ? (
+                <button
+                  type="button"
+                  onClick={handleOpenProof}
+                  className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#e6dec5] bg-[#f4efe6] px-3 py-2 text-[11px] font-bold text-[#5c3524] transition-all duration-200 hover:border-[#c5a059]/50 hover:bg-[#e6dec5] focus:outline-none focus:ring-2 focus:ring-[#c5a059]/50"
+                >
+                  <FileText
+                    className="h-3.5 w-3.5 text-[#8c5338]"
+                    aria-hidden="true"
+                  />
+
+                  <span>Ver comprovativo</span>
+                </button>
+              ) : (
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-bold text-amber-700">
+                  Sem comprovativo
+                </span>
+              )}
             </div>
           </div>
-        </div>
+        </section>
+
+        <section className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-3">
+            <span className="block text-[10px] font-bold uppercase tracking-wide text-amber-800">
+              Sinal pago
+            </span>
+
+            <span className="mt-1 block font-serif text-base font-black text-amber-950">
+              {formatCurrency(depositAmount)}
+            </span>
+
+            <span className="mt-0.5 block text-[10px] text-amber-800/70">
+              50% do total
+            </span>
+          </div>
+
+          <div className="rounded-2xl border border-[#e6dec5] bg-[#f4efe6] p-3">
+            <span className="block text-[10px] font-bold uppercase tracking-wide text-[#8c5338]">
+              Restante
+            </span>
+
+            <span className="mt-1 block font-serif text-base font-black text-[#2b1810]">
+              {formatCurrency(remainingAmount)}
+            </span>
+
+            <span className="mt-0.5 block text-[10px] text-[#8c5338]">
+              Valor por pagar
+            </span>
+          </div>
+        </section>
 
         {notes && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#c5a059] uppercase tracking-wider">
-              <MessageSquare className="w-4 h-4 text-[#8c5338]" />
-              <span>Observações do Cliente</span>
+          <section className="space-y-2">
+            <div className="flex items-center gap-2">
+              <MessageSquare
+                className="h-4 w-4 text-[#8c5338]"
+                aria-hidden="true"
+              />
+
+              <h3 className="text-[11px] font-black uppercase tracking-wider text-[#5c3524]">
+                Observações
+              </h3>
             </div>
-            <div className="bg-[#fdfbf7] p-3 rounded-2xl border border-[#e6dec5]">
-              <p className="text-[11px] text-[#5c3524] italic">"{notes}"</p>
+
+            <div className="rounded-2xl border border-[#e6dec5] bg-[#fdfbf7] p-4">
+              <p className="text-xs leading-5 text-[#5c3524]">
+                “{notes}”
+              </p>
             </div>
-          </div>
+          </section>
         )}
 
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-[#c5a059] uppercase tracking-wider">
-            <CreditCard className="w-4 h-4 text-[#8c5338]" />
-            <span>Pagamento</span>
-          </div>
-          <div className="bg-[#fdfbf7] p-3.5 rounded-2xl border border-[#e6dec5] flex items-center justify-between">
-            <div className="space-y-0.5">
-              <p className="text-xs font-bold text-[#2b1810]">
-                {paymentMethod === 'express' ? 'MCX Express' : 'Transferência Bancária'}
-              </p>
-              <p className="text-[11px] text-[#5c3524]">
-                Comprovativo: {paymentProofUrl ? 'Anexado' : 'Não enviado'}
-              </p>
-            </div>
-            {paymentProofUrl && (
-              <button 
-                type="button"
-                onClick={handleOpenProof}
-                className="px-3 py-1.5 rounded-xl bg-[#f4efe6] hover:bg-[#e6dec5] text-[#5c3524] text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 border border-[#e6dec5]"
-              >
-                <FileText className="w-3.5 h-3.5 text-[#8c5338]" />
-                <span>Ver comprovativo</span>
-              </button>
-            )}
-          </div>
-        </div>
+        <section className="space-y-2">
+          <div className="flex items-center gap-2">
+            <PackageCheck
+              className="h-4 w-4 text-[#8c5338]"
+              aria-hidden="true"
+            />
 
-        <div className="space-y-2 pt-1">
-          <label className="text-xs font-bold text-[#2b1810] block">Estado do Pedido</label>
-          <select 
+            <label
+              htmlFor="order-status"
+              className="text-[11px] font-black uppercase tracking-wider text-[#5c3524]"
+            >
+              Estado do pedido
+            </label>
+          </div>
+
+          <select
+            id="order-status"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-[#fdfbf7] border border-[#e6dec5] rounded-xl text-xs text-[#2b1810] font-semibold focus:outline-none focus:border-[#c5a059]"
+            onChange={(event) =>
+              setStatus(event.target.value)
+            }
+            disabled={isSaving}
+            className="w-full cursor-pointer rounded-xl border border-[#e6dec5] bg-[#fdfbf7] px-3.5 py-3 text-xs font-semibold text-[#2b1810] outline-none transition-all duration-200 focus:border-[#c5a059] focus:bg-white focus:ring-2 focus:ring-[#c5a059]/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <option value="pending_payment">Pendente (Pagamento)</option>
-            <option value="confirmed">Pagamento Confirmado</option>
-          </select>
-        </div>
+            <option value="pending">
+              Pendente
+            </option>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#f4efe6]">
-          <button 
+            <option value="production">
+              Em produção
+            </option>
+
+            <option value="completed">
+              Concluído
+            </option>
+          </select>
+
+          <p className="text-[10px] leading-4 text-[#8c5338]">
+            Confirme o pagamento antes de colocar o
+            pedido em produção.
+          </p>
+        </section>
+
+        <div className="flex flex-col-reverse gap-2 border-t border-[#f4efe6] pt-4 sm:flex-row sm:items-center sm:justify-end">
+          <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl bg-[#f4efe6] hover:bg-[#e6dec5] text-[#5c3524] text-xs font-bold transition-all cursor-pointer"
+            disabled={isSaving}
+            className="flex h-10 cursor-pointer items-center justify-center rounded-xl border border-[#e6dec5] bg-[#f4efe6] px-4 text-xs font-bold text-[#5c3524] transition-all duration-200 hover:border-[#c5a059]/50 hover:bg-[#e6dec5] focus:outline-none focus:ring-2 focus:ring-[#c5a059]/50 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancelar
           </button>
-          <button 
+
+          <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl bg-[#2b1810] hover:bg-[#5c3524] text-[#c5a059] text-xs font-bold transition-all cursor-pointer shadow-sm border border-[#c5a059]/30 flex items-center gap-2"
+            disabled={isSaving}
+            className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#2b1810] bg-[#2b1810] px-5 text-xs font-bold text-[#c5a059] shadow-sm transition-all duration-200 hover:bg-[#5c3524] focus:outline-none focus:ring-2 focus:ring-[#c5a059]/50 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Guardar alteração</span>
+            {isSaving ? (
+              <>
+                <Loader2
+                  className="h-4 w-4 animate-spin"
+                  aria-hidden="true"
+                />
+
+                <span>A guardar...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                />
+
+                <span>Guardar alteração</span>
+              </>
+            )}
           </button>
         </div>
       </form>
