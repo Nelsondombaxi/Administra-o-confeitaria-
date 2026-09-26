@@ -175,12 +175,12 @@ export const categoryService = {
 
     if (categoryData.description !== undefined) {
       payload.description =
-        categoryData.description.trim() || null;
+        categoryData.description?.trim() || null;
     }
 
     if (categoryData.image_url !== undefined) {
       payload.image_url =
-        categoryData.image_url.trim() || null;
+        categoryData.image_url?.trim() || null;
     }
 
     if (Object.keys(payload).length === 0) {

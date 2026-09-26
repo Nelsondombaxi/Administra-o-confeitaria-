@@ -19,6 +19,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { productService } from '../../services/productService';
 import { categoryService } from '../../services/categoryService';
+
 import { ProductTable } from '../../components/products/ProductTable';
 import { ProductModal } from '../../components/products/ProductModal';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -39,7 +40,8 @@ type CategoryList = Awaited<
 
 export function ProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
-  const [categories, setCategories] = useState<CategoryList>([]);
+  const [categories, setCategories] =
+    useState<CategoryList>([]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,7 +49,8 @@ export function ProductsPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] =
+    useState(false);
 
   const [selectedProduct, setSelectedProduct] =
     useState<AdminProduct | null>(null);
@@ -58,7 +61,8 @@ export function ProductsPage() {
   const [productToDelete, setProductToDelete] =
     useState<AdminProduct | null>(null);
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] =
+    useState('');
 
   const fetchData = useCallback(
     async (showLoading = true) => {
@@ -69,16 +73,17 @@ export function ProductsPage() {
 
         setErrorMessage('');
 
-        const [prodData, catData] = await Promise.all([
-          productService.getAllProducts(),
-          categoryService.getAllCategories(),
-        ]);
+        const [prodData, catData] =
+          await Promise.all([
+            productService.getAllProducts(),
+            categoryService.getAllCategories(),
+          ]);
 
         const formattedProducts: AdminProduct[] =
           (prodData ?? []).map((product) => {
-
             const categoryId =
-              typeof product.category_id === 'string'
+              typeof product.category_id ===
+              'string'
                 ? product.category_id
                 : null;
 
@@ -92,17 +97,22 @@ export function ProductsPage() {
               DEFAULT_PRODUCT_IMAGE;
 
             const available =
-              typeof product.is_active === 'boolean'
+              typeof product.is_active ===
+              'boolean'
                 ? product.is_active
-                : typeof product.available === 'boolean'
+                : typeof product.available ===
+                    'boolean'
                   ? product.available
                   : true;
 
             return {
               id: product.id,
               name: product.name,
-              description: product.description ?? '',
-              price: Number(product.price ?? 0),
+              description:
+                product.description ?? '',
+              price: Number(
+                product.price ?? 0,
+              ),
               imageUrl,
               categoryId,
               categoryName,
@@ -205,8 +215,13 @@ export function ProductsPage() {
       });
 
     return () => {
-      void supabase.removeChannel(productsChannel);
-      void supabase.removeChannel(categoriesChannel);
+      void supabase.removeChannel(
+        productsChannel,
+      );
+
+      void supabase.removeChannel(
+        categoriesChannel,
+      );
     };
   }, [fetchData]);
 
@@ -226,8 +241,12 @@ export function ProductsPage() {
         product.categoryName?.toLowerCase() ?? '';
 
       return (
-        productName.includes(normalizedSearch) ||
-        categoryName.includes(normalizedSearch)
+        productName.includes(
+          normalizedSearch,
+        ) ||
+        categoryName.includes(
+          normalizedSearch,
+        )
       );
     });
   }, [products, normalizedSearch]);
@@ -258,12 +277,20 @@ export function ProductsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (product: Product) => {
-    const adminProduct =
-      product as AdminProduct;
+  const handleDeleteClick = (id: string) => {
+    const product = products.find(
+      (item) => item.id === id,
+    );
+
+    if (!product) {
+      setErrorMessage(
+        'Não foi possível encontrar o produto selecionado.',
+      );
+      return;
+    }
 
     setErrorMessage('');
-    setProductToDelete(adminProduct);
+    setProductToDelete(product);
     setIsDeleteDialogOpen(true);
   };
 
@@ -284,12 +311,9 @@ export function ProductsPage() {
       setErrorMessage('');
 
       const name = data.name.trim();
-
       const description =
         data.description.trim();
-
       const price = Number(data.price);
-
       const categoryId =
         data.categoryId || null;
 
@@ -297,7 +321,9 @@ export function ProductsPage() {
         data.imageUrl.trim() ||
         DEFAULT_PRODUCT_IMAGE;
 
-      const isActive = Boolean(data.available);
+      const isActive = Boolean(
+        data.available,
+      );
 
       if (!name) {
         setErrorMessage(

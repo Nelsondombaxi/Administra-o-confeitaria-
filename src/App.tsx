@@ -18,18 +18,39 @@ type ActiveTab =
   | 'categorias'
   | 'configuracoes';
 
-export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => localStorage.getItem(AUTH_STORAGE_KEY) === 'true'
+const isValidActiveTab = (
+  tab: string,
+): tab is ActiveTab => {
+  return (
+    tab === 'dashboard' ||
+    tab === 'orders' ||
+    tab === 'produtos' ||
+    tab === 'categorias' ||
+    tab === 'configuracoes'
   );
+};
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] =
+    useState(
+      () =>
+        localStorage.getItem(AUTH_STORAGE_KEY) ===
+        'true',
+    );
+
+  const [activeTab, setActiveTab] =
+    useState<ActiveTab>('dashboard');
 
   useEffect(() => {
     if (isAuthenticated) {
-      localStorage.setItem(AUTH_STORAGE_KEY, 'true');
+      localStorage.setItem(
+        AUTH_STORAGE_KEY,
+        'true',
+      );
     } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+      localStorage.removeItem(
+        AUTH_STORAGE_KEY,
+      );
     }
   }, [isAuthenticated]);
 
@@ -42,6 +63,14 @@ export default function App() {
     localStorage.removeItem(AUTH_STORAGE_KEY);
     setIsAuthenticated(false);
     setActiveTab('dashboard');
+  };
+
+  const handleDashboardNavigate = (
+    tab: string,
+  ) => {
+    if (isValidActiveTab(tab)) {
+      setActiveTab(tab);
+    }
   };
 
   const renderContent = () => {
@@ -60,12 +89,20 @@ export default function App() {
 
       case 'dashboard':
       default:
-        return <DashboardPage onNavigate={setActiveTab} />;
+        return (
+          <DashboardPage
+            onNavigate={handleDashboardNavigate}
+          />
+        );
     }
   };
 
   if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+      />
+    );
   }
 
   return (

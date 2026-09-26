@@ -9,7 +9,6 @@ import {
   Check,
   ImagePlus,
   Loader2,
-  Upload,
   X,
 } from 'lucide-react';
 
@@ -43,6 +42,7 @@ export function CategoryForm({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -92,7 +92,8 @@ export function CategoryForm({
       const fileExtension =
         file.name.split('.').pop()?.toLowerCase() || 'jpg';
 
-      const fileName = `${crypto.randomUUID()}.${fileExtension}`;
+      const fileName =
+        `${crypto.randomUUID()}.${fileExtension}`;
 
       const { error: uploadError } =
         await supabase.storage
@@ -145,7 +146,8 @@ export function CategoryForm({
     event.preventDefault();
 
     const trimmedName = name.trim();
-    const trimmedDescription = description.trim();
+    const trimmedDescription =
+      description.trim();
 
     if (!trimmedName) {
       setErrorMessage(
@@ -397,7 +399,6 @@ export function CategoryForm({
                   text-[#5c3524]
                   shadow-sm
                   transition-transform duration-200
-                  group-hover:scale-105
                 "
               >
                 <ImagePlus
@@ -549,8 +550,7 @@ export function CategoryForm({
             hover:border-[#d8c9aa]
             hover:bg-[#e6dec5]
             focus:outline-none
-            focus:ring-2
-            focus:ring-[#c5a059]/40
+            focus:ring-2 focus:ring-[#c5a059]/40
             disabled:cursor-not-allowed
             disabled:opacity-50
             sm:w-auto
@@ -576,8 +576,7 @@ export function CategoryForm({
             hover:bg-[#5c3524]
             hover:shadow-md
             focus:outline-none
-            focus:ring-2
-            focus:ring-[#c5a059]/50
+            focus:ring-2 focus:ring-[#c5a059]/50
             disabled:cursor-not-allowed
             disabled:opacity-50
             sm:w-auto

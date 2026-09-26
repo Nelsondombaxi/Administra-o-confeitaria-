@@ -38,16 +38,20 @@ interface DashboardOrder {
 export function DashboardPage({
   onNavigate,
 }: DashboardPageProps) {
-  const [totalOrders, setTotalOrders] = useState(0);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [totalOrders, setTotalOrders] =
+    useState(0);
+
+  const [pendingCount, setPendingCount] =
+    useState(0);
+
   const [activeProductsCount, setActiveProductsCount] =
     useState(0);
 
-  const [recentOrders, setRecentOrders] = useState<
-    DashboardOrder[]
-  >([]);
+  const [recentOrders, setRecentOrders] =
+    useState<DashboardOrder[]>([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
   const {
     settings,
@@ -58,11 +62,15 @@ export function DashboardPage({
     settings?.admin_dashboard_name?.trim() ||
     'Administrador';
 
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      const [ordersData, productsResult] =
-        await Promise.all([
+  const fetchDashboardData = useCallback(
+    async () => {
+      try {
+        const [
+          ordersData,
+          productsResult,
+        ] = await Promise.all([
           orderService.getAllOrders(),
+
           supabase
             .from('products')
             .select('*', {
@@ -72,56 +80,68 @@ export function DashboardPage({
             .eq('is_active', true),
         ]);
 
-      const orders = (ordersData ??
-        []) as DashboardOrder[];
+        const orders = (ordersData ??
+          []) as DashboardOrder[];
 
-      setTotalOrders(orders.length);
+        setTotalOrders(orders.length);
 
-      const pending = orders.filter((order) => {
-        const status = order.status;
-        const paymentStatus = order.payment_status;
+        const pending = orders.filter(
+          (order) => {
+            const status = order.status;
+            const paymentStatus =
+              order.payment_status;
 
-        return (
-          !status ||
-          status === 'pending' ||
-          status === 'pending_payment' ||
-          paymentStatus === 'pending_payment'
+            return (
+              !status ||
+              status === 'pending' ||
+              status === 'pending_payment' ||
+              paymentStatus ===
+                'pending_payment'
+            );
+          },
         );
-      });
 
-      setPendingCount(pending.length);
+        setPendingCount(pending.length);
 
-      setRecentOrders(
-        orders
-          .sort((a, b) => {
-            const dateA = a.created_at
-              ? new Date(a.created_at).getTime()
-              : 0;
+        setRecentOrders(
+          orders
+            .sort((a, b) => {
+              const dateA = a.created_at
+                ? new Date(
+                    a.created_at,
+                  ).getTime()
+                : 0;
 
-            const dateB = b.created_at
-              ? new Date(b.created_at).getTime()
-              : 0;
+              const dateB = b.created_at
+                ? new Date(
+                    b.created_at,
+                  ).getTime()
+                : 0;
 
-            return dateB - dateA;
-          })
-          .slice(0, 3),
-      );
+              return dateB - dateA;
+            })
+            .slice(0, 3),
+        );
 
-      if (
-        !productsResult.error &&
-        productsResult.count !== null
-      ) {
-        setActiveProductsCount(productsResult.count);
+        if (
+          !productsResult.error &&
+          productsResult.count !== null
+        ) {
+          setActiveProductsCount(
+            productsResult.count,
+          );
+        }
+      } catch (error: unknown) {
+        console.error(
+          'Erro ao carregar dados do dashboard:',
+          error,
+        );
+      } finally {
+        setLoading(false);
       }
-    } catch (error: unknown) {
-      console.error(
-        'Erro ao carregar dados do dashboard:',
-        error,
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     void fetchDashboardData();
@@ -157,8 +177,13 @@ export function DashboardPage({
       .subscribe();
 
     return () => {
-      void supabase.removeChannel(ordersChannel);
-      void supabase.removeChannel(productsChannel);
+      void supabase.removeChannel(
+        ordersChannel,
+      );
+
+      void supabase.removeChannel(
+        productsChannel,
+      );
     };
   }, [fetchDashboardData]);
 
@@ -190,6 +215,7 @@ export function DashboardPage({
       {/* Cabeçalho */}
       <section className="relative overflow-hidden rounded-2xl border border-[#e6dec5] bg-[#f4efe6] shadow-sm">
         <div className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-[#e6dec5]/50" />
+
         <div className="absolute -bottom-20 right-20 h-32 w-32 rounded-full bg-[#c5a059]/10" />
 
         <div className="relative flex items-center gap-4 p-6">
@@ -382,12 +408,6 @@ export function DashboardPage({
               const status =
                 order.status || 'pending';
 
-              const isPending =
-                status === 'pending' ||
-                status === 'pending_payment' ||
-                order.payment_status ===
-                  'pending_payment';
-
               const isProduction =
                 status === 'production';
 
@@ -428,14 +448,16 @@ export function DashboardPage({
                 statusClass =
                   'border-blue-200 bg-blue-50 text-blue-800';
 
-                dotClass = 'bg-blue-500';
+                dotClass =
+                  'bg-blue-500';
               }
 
               if (isCompleted) {
                 statusClass =
                   'border-emerald-200 bg-emerald-50 text-emerald-800';
 
-                dotClass = 'bg-emerald-500';
+                dotClass =
+                  'bg-emerald-500';
               }
 
               return (
